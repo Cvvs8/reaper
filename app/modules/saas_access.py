@@ -35,13 +35,44 @@ class SaaSAccessReaper(BaseReaperModule):
             return f"[Execute]  DRY RUN: Would revoke access for user '{user}' to '{source}'."
         else:
             # Execute actual API call (using mock for demo)
-            api_response = MockSlackAPI.revoke_user_access(user, source)
-            self.api_responses.append(api_response)
+            try:
+                api_response = MockSlackAPI.revoke_user_access(user, source)
+                self.api_responses.append(api_response)
+                
+                if api_response.get('success'):
+                    return f"[Execute]  ACTION: Successfully revoked access for user '{user}' to '{source}'."
+                else:
+                    return f"[Execute]  ERROR: Failed to revoke access for user '{user}' to '{source}': {api_response.get('message')}"
             
-            if api_response.get('success'):
-                return f"[Execute]  ACTION: Successfully revoked access for user '{user}' to '{source}'."
-            else:
-                return f"[Execute]  ERROR: Failed to revoke access for user '{user}' to '{source}': {api_response.get('message')}"
+            except (ConnectionError, TimeoutError) as e:
+                error_response = {
+                    "success": False,
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                    "error_type": type(e).__name__
+                }
+                self.api_responses.append(error_response)
+                return f"[Execute]  EXCEPTION: Network error - {str(e)}"
+            
+            except PermissionError as e:
+                error_response = {
+                    "success": False,
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                    "error_type": "PermissionError"
+                }
+                self.api_responses.append(error_response)
+                return f"[Execute]  EXCEPTION: Permission denied - {str(e)}"
+            
+            except Exception as e:
+                error_response = {
+                    "success": False,
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                    "error_type": type(e).__name__
+                }
+                self.api_responses.append(error_response)
+                return f"[Execute]  EXCEPTION: Unexpected error - {str(e)}"
     
     def report(self) -> str:
         """Generate execution report"""

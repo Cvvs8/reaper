@@ -47,9 +47,10 @@ class TestEventProcessing:
             "type": "unauthorized_saas_access",
             "event_id": "test-001",
             "user": "john.doe@company.com",
-            "source": "slack"
+            "source": "slack",
+            "timestamp": "2024-01-01T12:00:00Z"
         }
-        
+
         response = client.post('/event', 
                              data=json.dumps(event),
                              content_type='application/json')
@@ -65,7 +66,8 @@ class TestEventProcessing:
             "type": "open_s3_bucket",
             "event_id": "test-002",
             "bucket_name": "test-bucket",
-            "region": "us-east-1"
+            "region": "us-east-1",
+            "timestamp": "2024-01-01T12:00:00Z"
         }
         
         response = client.post('/event',
@@ -81,16 +83,17 @@ class TestEventProcessing:
         """Test handling of invalid event type"""
         event = {
             "type": "unknown_event",
-            "event_id": "test-003"
+            "event_id": "test-003",
+            "timestamp": "2024-01-01T12:00:00Z"
         }
         
         response = client.post('/event',
                              data=json.dumps(event),
                              content_type='application/json')
-        assert response.status_code == 200
+        assert response.status_code == 400
         
         data = json.loads(response.data)
-        assert data['status'] == 'ignored'
+        assert data['status'] == 'validation_error'
     
     def test_missing_event_type(self, client):
         """Test handling of missing event type"""
@@ -101,10 +104,10 @@ class TestEventProcessing:
         response = client.post('/event',
                              data=json.dumps(event),
                              content_type='application/json')
-        assert response.status_code == 200
+        assert response.status_code == 400
         
         data = json.loads(response.data)
-        assert data['status'] == 'error'
+        assert data['status'] == 'validation_error'
     
     def test_invalid_json(self, client):
         """Test handling of invalid JSON"""
@@ -128,15 +131,21 @@ class TestValidation:
             "type": "unauthorized_saas_access",
             "event_id": "test-005",
             "user": "jane.doe@company.com",
-            "source": "slack"
+            "source": "slack",
+            "timestamp": "2024-01-01T12:00:00Z"
         }
         
         response = client.post('/event',
                              data=json.dumps(event),
                              content_type='application/json')
-        data = json.loads(response.data)
+        assert response.status_code == 200
         
-        assert any("[Validate] SUCCESS" in log for log in data['log'])
+        data = json.loads(response.data)
+        # Check that the event was processed successfully
+        assert data['status'] == 'processed'
+        assert len(data['log']) > 0
+        # Look for validation success in the logs
+        assert any("SUCCESS" in log for log in data['log'])
     
     def test_saas_validation_failure(self, client):
         """Test failed SaaS event validation"""
@@ -144,16 +153,16 @@ class TestValidation:
             "type": "unauthorized_saas_access",
             "event_id": "test-006",
             "user": "jane.doe@company.com"
-            # Missing 'source' field
+            # Missing 'source' and 'timestamp' fields
         }
         
         response = client.post('/event',
                              data=json.dumps(event),
                              content_type='application/json')
-        data = json.loads(response.data)
+        assert response.status_code == 400
         
-        assert data['status'] == 'validation_failed'
-        assert any("[Validate] FAILED" in log for log in data['log'])
+        data = json.loads(response.data)
+        assert data['status'] == 'validation_error'
     
     def test_s3_validation_failure(self, client):
         """Test failed S3 event validation"""
@@ -161,13 +170,13 @@ class TestValidation:
             "type": "open_s3_bucket",
             "event_id": "test-007",
             "bucket_name": "test-bucket"
-            # Missing 'region' field
+            # Missing 'region' and 'timestamp' fields
         }
         
         response = client.post('/event',
                              data=json.dumps(event),
                              content_type='application/json')
-        data = json.loads(response.data)
+        assert response.status_code == 400
         
-        assert data['status'] == 'validation_failed'
-        assert any("[Validate] FAILED" in log for log in data['log'])
+        data = json.loads(response.data)
+        assert data['status'] == 'validation_error'

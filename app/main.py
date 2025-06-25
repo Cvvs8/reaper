@@ -10,6 +10,8 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask, jsonify, request
 
 from .agent import ReaperAgent, load_module_map_from_config
+from .utils.schema import APISchemaValidator
+from .utils.dashboard import DashboardGenerator
 
 
 def setup_logging(log_file: str = 'logs/reaper_actions.log') -> logging.Logger:
@@ -98,6 +100,19 @@ def create_app() -> Flask:
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    @app.route('/dashboard', methods=['GET'])
+    def dashboard():
+        """Visual dashboard for monitoring agent status"""
+        try:
+            return DashboardGenerator.render_dashboard(agent, agent.audit_manager)
+        except Exception as e:
+            return f"<h1>Dashboard Error</h1><p>{str(e)}</p>", 500
+
+    @app.route('/openapi.json', methods=['GET'])
+    def get_openapi_spec():
+        """Get OpenAPI specification"""
+        return jsonify(APISchemaValidator.get_openapi_spec()), 200
+
     @app.route('/event', methods=['POST'])
     def handle_event():
         """Process security event"""
@@ -108,6 +123,15 @@ def create_app() -> Flask:
             }), 400
         
         event_data = request.get_json()
+        
+        # Validate event data against schema
+        is_valid, validation_message = APISchemaValidator.validate_event(event_data)
+        if not is_valid:
+            return jsonify({
+                "status": "validation_error",
+                "log": [f"Schema validation failed: {validation_message}"]
+            }), 400
+        
         result = agent.process_event(event_data)
         
         # Log to console for real-time monitoring

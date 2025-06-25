@@ -35,24 +35,55 @@ class S3VisibilityReaper(BaseReaperModule):
             return f"[Execute]  DRY RUN: Would restrict public permissions on S3 bucket '{bucket}'."
         else:
             # Execute actual API calls (using mock for demo)
-            api_response1 = MockAWSS3.put_public_access_block(bucket, region)
-            self.api_responses.append(api_response1)
+            try:
+                api_response1 = MockAWSS3.put_public_access_block(bucket, region)
+                self.api_responses.append(api_response1)
+                
+                # Also update bucket policy
+                restrictive_policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "s3:GetObject",
+                        "Resource": f"arn:aws:s3:::{bucket}/*",
+                        "Condition": {"Bool": {"aws:SecureTransport": "false"}}
+                    }]
+                }
+                api_response2 = MockAWSS3.put_bucket_policy(bucket, restrictive_policy)
+                self.api_responses.append(api_response2)
+                
+                return f"[Execute]  ACTION: Restricted public permissions on S3 bucket '{bucket}'."
             
-            # Also update bucket policy
-            restrictive_policy = {
-                "Version": "2012-10-17",
-                "Statement": [{
-                    "Effect": "Deny",
-                    "Principal": "*",
-                    "Action": "s3:GetObject",
-                    "Resource": f"arn:aws:s3:::{bucket}/*",
-                    "Condition": {"Bool": {"aws:SecureTransport": "false"}}
-                }]
-            }
-            api_response2 = MockAWSS3.put_bucket_policy(bucket, restrictive_policy)
-            self.api_responses.append(api_response2)
+            except (ConnectionError, FileNotFoundError) as e:
+                error_response = {
+                    "success": False,
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                    "error_type": type(e).__name__
+                }
+                self.api_responses.append(error_response)
+                return f"[Execute]  EXCEPTION: Network/Access error - {str(e)}"
             
-            return f"[Execute]  ACTION: Restricted public permissions on S3 bucket '{bucket}'."
+            except (PermissionError, ValueError) as e:
+                error_response = {
+                    "success": False,
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                    "error_type": type(e).__name__
+                }
+                self.api_responses.append(error_response)
+                return f"[Execute]  EXCEPTION: Permission/Validation error - {str(e)}"
+            
+            except Exception as e:
+                error_response = {
+                    "success": False,
+                    "message": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                    "error_type": type(e).__name__
+                }
+                self.api_responses.append(error_response)
+                return f"[Execute]  EXCEPTION: Unexpected error - {str(e)}"
     
     def report(self) -> str:
         """Generate execution report"""

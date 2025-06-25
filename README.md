@@ -4,12 +4,16 @@ A containerized Flask-based security automation agent that processes security ev
 
 ## 🚀 Features
 
-- **Dry Run Mode**: Test remediation actions without executing them
-- **Audit Trail**: Comprehensive logging in Markdown or JSON format
-- **Mock SDK Integration**: Safe testing with simulated API calls
-- **Containerized**: Docker and Docker Compose ready
-- **Health Monitoring**: Built-in health checks and status endpoints
-- **Modular Design**: Easy to extend with new remediation modules
+- **🛡️ Schema Validation**: JSON Schema validation with OpenAPI 3.0 specification
+- **🔍 Visual Dashboard**: Web-based monitoring interface with real-time status
+- **🎭 Exception Simulation**: Comprehensive mock SDKs with success/failure/exception scenarios
+- **🔄 CI/CD Pipeline**: GitHub Actions workflow with automated testing and deployment
+- **🏃 Dry Run Mode**: Test remediation actions without executing them
+- **📊 Audit Trail**: Comprehensive logging in Markdown or JSON format
+- **🧪 Mock SDK Integration**: Safe testing with simulated API calls and exception handling
+- **🐳 Containerized**: Docker and Docker Compose ready with health checks
+- **⚕️ Health Monitoring**: Built-in health checks and status endpoints
+- **🔧 Modular Design**: Easy to extend with new remediation modules
 
 ## Quick Start
 
@@ -59,10 +63,43 @@ A containerized Flask-based security automation agent that processes security ev
 ### Core Endpoints
 
 - `GET /` - Health check and status
-- `POST /event` - Process security events
+- `GET /dashboard` - **NEW!** Visual monitoring dashboard
+- `GET /openapi.json` - **NEW!** OpenAPI 3.0 specification
+- `POST /event` - Process security events (with schema validation)
 - `GET /config` - Get current configuration
 - `POST /toggle-dry-run` - Toggle between dry run and live mode
 - `GET /audit` - Get audit trail information
+
+### 🎯 New Features
+
+#### Visual Dashboard
+Access the monitoring dashboard at:
+```bash
+curl http://localhost:5001/dashboard
+# Or open in browser: http://localhost:5001/dashboard
+```
+
+#### OpenAPI Specification
+Get the complete API documentation:
+```bash
+curl http://localhost:5001/openapi.json
+```
+
+#### Schema Validation
+Events are now validated against JSON Schema. Invalid events return detailed error messages:
+```bash
+# Valid event with all required fields
+curl -X POST http://localhost:5001/event \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "unauthorized_saas_access",
+    "event_id": "test-001",
+    "user": "user@company.com",
+    "source": "slack",
+    "timestamp": "2024-01-01T12:00:00Z",
+    "severity": "high"
+  }'
+```
 
 ### Example API Calls
 
@@ -76,6 +113,33 @@ curl http://localhost:5001/
 curl -X POST http://localhost:5001/toggle-dry-run
 ```
 
+#### Test Exception Handling
+```bash
+# Trigger network exception
+curl -X POST http://localhost:5001/event \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "unauthorized_saas_access",
+    "event_id": "exception-test-001",
+    "user": "exception@company.com",
+    "source": "slack",
+    "timestamp": "2024-01-01T12:00:00Z",
+    "severity": "high"
+  }'
+
+# Trigger timeout exception
+curl -X POST http://localhost:5001/event \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "unauthorized_saas_access",
+    "event_id": "timeout-test-001",
+    "user": "timeout@company.com",
+    "source": "slack",
+    "timestamp": "2024-01-01T12:00:00Z",
+    "severity": "high"
+  }'
+```
+
 #### Process S3 Security Event
 ```bash
 curl -X POST http://localhost:5001/event \
@@ -85,6 +149,7 @@ curl -X POST http://localhost:5001/event \
     "event_id": "s3-incident-001",
     "bucket_name": "my-exposed-bucket",
     "region": "us-east-1",
+    "timestamp": "2024-01-01T12:00:00Z",
     "severity": "critical"
   }'
 ```
@@ -129,18 +194,40 @@ Example audit entry location: `logs/audit_trail.md` or `logs/audit_trail.json`
 
 ## 🧪 Testing
 
+### Automated CI/CD Pipeline
+
+The project includes a comprehensive GitHub Actions pipeline that:
+
+- ✅ **Multi-Python Testing**: Tests against Python 3.9, 3.10, and 3.11
+- ✅ **Security Scanning**: Automated security scans with bandit
+- ✅ **Docker Testing**: Builds and tests Docker containers
+- ✅ **Integration Testing**: End-to-end API testing
+- ✅ **Code Coverage**: Coverage reporting with codecov
+- ✅ **Schema Validation**: Tests JSON Schema validation
+- ✅ **Exception Handling**: Tests mock SDK exception scenarios
+
+Pipeline is triggered on:
+- Push to `main` or `develop` branches
+- Pull requests to `main`
+
 ### Unit Tests with Pytest
 
 ```bash
 # Run all tests locally
 pytest
 
+# Run schema validation tests
+pytest tests/test_schema_and_exceptions.py -v
+
+# Run exception handling tests
+pytest tests/test_schema_and_exceptions.py::TestExceptionHandling -v
+
 # Or use the test runner script
 python run_tests.py
 
 # Run with coverage (requires pytest-cov)
 pip install pytest-cov
-pytest --cov=app
+pytest --cov=app --cov-report=html
 
 # Run specific test file
 pytest tests/test_api.py
@@ -183,10 +270,19 @@ python test_reaper.py
 - ✅ Health check and status endpoints
 - ✅ Configuration retrieval  
 - ✅ Security event processing (SaaS access, S3 buckets)
+- ✅ Schema validation and error handling
+- ✅ Exception simulation and handling
 - ✅ Dry run mode functionality
 - ✅ Audit trail generation
-- ✅ Error handling and validation
+- ✅ Visual dashboard functionality
+- ✅ OpenAPI specification validation
 - ✅ API response format validation
+
+**New comprehensive test scenarios:**
+- Network timeouts and connection errors
+- Permission denied scenarios
+- Invalid schema validation
+- Mock SDK exception handling
 
 This complements the unit tests and provides real-world usage examples.
 
