@@ -1,6 +1,28 @@
 #!/usr/bin/env python3
 """
-Test script for Reaper Agent with audit trail and dry run features
+Reaper Agent Integration Test Suite
+
+This script provides comprehensive integration testing for the Reaper Agent.
+It tests all API endpoints, demonstrates usage patterns, and validates
+the complete security event processing workflow.
+
+Usage:
+    python test_reaper.py
+
+Prerequisites:
+    - Reaper Agent running on http://localhost:5001
+    - Required packages: requests
+
+What it tests:
+    ✅ Health check and status endpoints
+    ✅ Configuration retrieval
+    ✅ Security event processing (SaaS access, S3 buckets)
+    ✅ Dry run mode functionality
+    ✅ Audit trail generation
+    ✅ Error handling and validation
+    ✅ API response format validation
+
+This complements the unit tests in tests/ by providing end-to-end integration testing.
 """
 import json
 import time
@@ -80,6 +102,36 @@ def test_audit_trail():
     print(f"Response: {json.dumps(response.json(), indent=2)}")
     print()
 
+def test_invalid_event():
+    """Test invalid event handling"""
+    print("=== Invalid Event Test ===")
+    
+    # Test missing event type
+    invalid_event = {
+        "event_id": "test-invalid-001",
+        "user": "test@example.com"
+        # Missing "type" field
+    }
+    
+    response = requests.post(f"{BASE_URL}/event", json=invalid_event)
+    print(f"Status: {response.status_code}")
+    print(f"Response: {json.dumps(response.json(), indent=2)}")
+    print()
+
+def test_malformed_json():
+    """Test malformed JSON handling"""
+    print("=== Malformed JSON Test ===")
+    
+    try:
+        response = requests.post(f"{BASE_URL}/event", 
+                               data="invalid json{", 
+                               headers={'Content-Type': 'application/json'})
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.text}")
+    except Exception as e:
+        print(f"Exception: {e}")
+    print()
+
 def main():
     """Run comprehensive test suite"""
     print("🔍 Reaper Agent Test Suite\n")
@@ -92,6 +144,10 @@ def main():
         # Test events in LIVE mode (default)
         test_saas_event(dry_run=False)
         test_s3_event(dry_run=False)
+        
+        # Test error handling
+        test_invalid_event()
+        test_malformed_json()
         
         # Toggle to dry run mode
         toggle_dry_run()

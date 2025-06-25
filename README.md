@@ -129,17 +129,90 @@ Example audit entry location: `logs/audit_trail.md` or `logs/audit_trail.json`
 
 ## 🧪 Testing
 
-Use the included test script to verify functionality:
+### Unit Tests with Pytest
 
 ```bash
+# Run all tests locally
+pytest
+
+# Or use the test runner script
+python run_tests.py
+
+# Run with coverage (requires pytest-cov)
+pip install pytest-cov
+pytest --cov=app
+
+# Run specific test file
+pytest tests/test_api.py
+
+# Run with verbose output
+pytest -v
+```
+
+### Testing in Docker
+
+```bash
+# Build and start the container
+docker-compose up -d
+
+# Run tests in the container (multiple ways)
+docker-compose exec reaper-agent pytest                    # Direct pytest
+docker-compose exec reaper-agent pytest tests/ -v         # Verbose with explicit path
+docker-compose exec reaper-agent python run_tests.py      # Python test runner
+docker-compose exec reaper-agent ./run_docker_tests.sh    # Bash script runner
+
+# Stop the container
+docker-compose down
+```
+
+**Note**: The `pytest.ini` configuration ensures tests are discovered correctly in the Docker environment.
+
+### Integration Testing
+
+Use the included integration test script to verify end-to-end functionality:
+
+```bash
+# Start the agent first
+python main.py
+
+# In another terminal, run the integration tests
 python test_reaper.py
 ```
 
-This will:
-- Test health endpoints
-- Process events in both LIVE and DRY RUN modes
-- Toggle between modes
-- Verify audit trail generation
+**What the integration tests cover:**
+- ✅ Health check and status endpoints
+- ✅ Configuration retrieval  
+- ✅ Security event processing (SaaS access, S3 buckets)
+- ✅ Dry run mode functionality
+- ✅ Audit trail generation
+- ✅ Error handling and validation
+- ✅ API response format validation
+
+This complements the unit tests and provides real-world usage examples.
+
+## 🚀 Development
+
+### Running Locally
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python main.py
+
+# Or run as module
+python -m app.main
+```
+
+### Adding New Modules
+
+1. Create a new class in `app/modules/` inheriting from `BaseReaperModule`
+2. Implement `validate()`, `execute()`, and `report()` methods
+3. Add the module to `app/modules/__init__.py`
+4. Add the module mapping to `app/agent.py`
+5. Update `config.yaml` with the new event type
+6. Create corresponding tests
 
 ## 🔒 Security Features
 
@@ -149,19 +222,39 @@ This will:
 - **Input validation** on all events
 - **Dry run mode** to prevent accidental actions
 
-## 📁 File Structure
+## 📁 Project Structure
 
 ```
 reaper/
-├── reaper.py              # Main application
-├── config.yaml           # Configuration file
+├── app/
+│   ├── __init__.py
+│   ├── main.py             # Flask app and API endpoints
+│   ├── agent.py            # ReaperAgent class
+│   ├── modules/
+│   │   ├── __init__.py
+│   │   ├── base.py         # BaseReaperModule class
+│   │   ├── saas_access.py  # SaaS access remediation
+│   │   └── s3_visibility.py # S3 bucket remediation
+│   ├── sdks/
+│   │   ├── __init__.py
+│   │   ├── base.py         # Base SDK class
+│   │   ├── slack.py        # Mock Slack API
+│   │   └── aws.py          # Mock AWS API
+│   └── utils/
+│       ├── __init__.py
+│       └── audit.py        # AuditTrailManager
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py         # Pytest configuration
+│   └── test_api.py         # API tests
+├── logs/                   # Generated logs directory
+├── config.yaml            # Configuration file
+├── main.py                # Main entry point
+├── test_reaper.py         # Manual test script
 ├── requirements.txt       # Python dependencies
+├── pytest.ini            # Pytest configuration
 ├── Dockerfile            # Container definition
 ├── docker-compose.yml    # Orchestration
-├── test_reaper.py        # Test suite
-├── logs/
-│   ├── audit_trail.md    # Audit trail (markdown)
-│   └── reaper_actions.log # Application logs
 └── README.md            # This file
 ```
 

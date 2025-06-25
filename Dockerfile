@@ -21,8 +21,16 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY reaper.py .
+COPY app/ ./app/
+COPY tests/ ./tests/
+COPY main.py .
+COPY run_tests.py .
 COPY config.yaml .
+COPY pytest.ini .
+COPY run_docker_tests.sh .
+
+# Make scripts executable
+RUN chmod +x run_docker_tests.sh
 
 # Create directory for logs with proper permissions
 RUN mkdir -p /app/logs && chmod 755 /app/logs
@@ -42,4 +50,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:5001/', timeout=5)" || exit 1
 
 # Run the application
-CMD ["python", "reaper.py"]
+CMD ["python", "main.py"]
