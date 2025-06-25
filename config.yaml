@@ -1,0 +1,14 @@
+# Reaper Agent Configuration
+settings:
+  dry_run_mode: false  # Set to true to simulate actions without executing them
+  audit_format: "markdown"  # Options: "markdown", "json"
+  audit_file: "logs/audit_trail.md"
+
+modules:
+  unauthorized_saas_access:
+    class: SaaSAccessReaper
+    description: "Handles unauthorized access events for SaaS platforms."
+
+  open_s3_bucket:
+    class: S3VisibilityReaper
+    description: "Handles publicly exposed S3 buckets."

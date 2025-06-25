@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  reaper-agent:
+    build: .
+    container_name: reaper-agent
+    ports:
+      - "5001:5001"
+    volumes:
+      # Mount logs directory to persist logs outside container
+      - ./logs:/app/logs
+      # Mount config file for easy updates without rebuilding
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5001/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - reaper-network
+
+networks:
+  reaper-network:
+    driver: bridge
