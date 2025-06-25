@@ -5072,3 +5072,253 @@ This file contains a detailed audit trail of all security remediation actions.
 
 ---
 
+## Action Report - 2025-06-25 14:42:56 UTC
+
+**Mode:** LIVE
+
+**Event ID:** test-001
+
+**Event Type:** unauthorized_saas_access
+
+**Status:** processed
+
+### Event Details
+```json
+{
+  "type": "unauthorized_saas_access",
+  "event_id": "test-001",
+  "user": "john.doe@company.com",
+  "source": "slack",
+  "timestamp": "2024-01-01T12:00:00Z"
+}
+```
+
+### Processing Log
+- --- Event ID: test-001 | Module: SaaSAccessReaper | Mode: LIVE ---
+- [Validate] SUCCESS: Required fields 'user' and 'source' are present.
+- [Execute]  ACTION: Successfully revoked access for user 'john.doe@company.com' to 'slack'.
+- [Report]   LIVE: Remediation policy applied for user 'john.doe@company.com'
+
+### API Responses
+```json
+{
+  "success": true,
+  "message": "Access revoked for john.doe@company.com in workspace slack",
+  "timestamp": "2025-06-25T14:42:56.419261",
+  "api_call": "slack.admin.users.remove"
+}
+```
+
+---
+
+## Action Report - 2025-06-25 14:42:56 UTC
+
+**Mode:** LIVE
+
+**Event ID:** test-002
+
+**Event Type:** open_s3_bucket
+
+**Status:** processed
+
+### Event Details
+```json
+{
+  "type": "open_s3_bucket",
+  "event_id": "test-002",
+  "bucket_name": "test-bucket",
+  "region": "us-east-1",
+  "timestamp": "2024-01-01T12:00:00Z"
+}
+```
+
+### Processing Log
+- --- Event ID: test-002 | Module: S3VisibilityReaper | Mode: LIVE ---
+- [Validate] SUCCESS: Required fields 'bucket_name' and 'region' are present.
+- [Execute]  ACTION: Restricted public permissions on S3 bucket 'test-bucket'.
+- [Report]   LIVE: Public access block applied to 'test-bucket'
+
+### API Responses
+```json
+{
+  "success": true,
+  "message": "Public access block applied to bucket test-bucket",
+  "timestamp": "2025-06-25T14:42:56.431215",
+  "api_call": "s3.put_public_access_block",
+  "bucket": "test-bucket",
+  "region": "us-east-1"
+}
+```
+
+```json
+{
+  "success": true,
+  "message": "Bucket policy updated for test-bucket",
+  "timestamp": "2025-06-25T14:42:56.431215",
+  "api_call": "s3.put_bucket_policy",
+  "bucket": "test-bucket",
+  "policy_statements": 1
+}
+```
+
+---
+
+## Action Report - 2025-06-25 14:42:56 UTC
+
+**Mode:** LIVE
+
+**Event ID:** test-005
+
+**Event Type:** unauthorized_saas_access
+
+**Status:** processed
+
+### Event Details
+```json
+{
+  "type": "unauthorized_saas_access",
+  "event_id": "test-005",
+  "user": "jane.doe@company.com",
+  "source": "slack",
+  "timestamp": "2024-01-01T12:00:00Z"
+}
+```
+
+### Processing Log
+- --- Event ID: test-005 | Module: SaaSAccessReaper | Mode: LIVE ---
+- [Validate] SUCCESS: Required fields 'user' and 'source' are present.
+- [Execute]  ACTION: Successfully revoked access for user 'jane.doe@company.com' to 'slack'.
+- [Report]   LIVE: Remediation policy applied for user 'jane.doe@company.com'
+
+### API Responses
+```json
+{
+  "success": true,
+  "message": "Access revoked for jane.doe@company.com in workspace slack",
+  "timestamp": "2025-06-25T14:42:56.468418",
+  "api_call": "slack.admin.users.remove"
+}
+```
+
+---
+
+## Action Report - 2025-06-25 14:42:56 UTC
+
+**Mode:** LIVE
+
+**Event ID:** test-exception-001
+
+**Event Type:** unauthorized_saas_access
+
+**Status:** processed
+
+### Event Details
+```json
+{
+  "type": "unauthorized_saas_access",
+  "event_id": "test-exception-001",
+  "user": "exception@example.com",
+  "source": "slack",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "severity": "high"
+}
+```
+
+### Processing Log
+- --- Event ID: test-exception-001 | Module: SaaSAccessReaper | Mode: LIVE ---
+- [Validate] SUCCESS: Required fields 'user' and 'source' are present.
+- [Execute]  EXCEPTION: Network error - Network error connecting to Slack API for workspace slack
+- [Report]   LIVE: FAILED - Remediation failed for user 'exception@example.com'
+
+### API Responses
+```json
+{
+  "success": false,
+  "message": "Network error connecting to Slack API for workspace slack",
+  "timestamp": "2025-06-25T14:42:56.509299",
+  "error_type": "ConnectionError"
+}
+```
+
+---
+
+## Action Report - 2025-06-25 14:42:56 UTC
+
+**Mode:** LIVE
+
+**Event ID:** test-timeout-001
+
+**Event Type:** unauthorized_saas_access
+
+**Status:** processed
+
+### Event Details
+```json
+{
+  "type": "unauthorized_saas_access",
+  "event_id": "test-timeout-001",
+  "user": "timeout@example.com",
+  "source": "slack",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "severity": "high"
+}
+```
+
+### Processing Log
+- --- Event ID: test-timeout-001 | Module: SaaSAccessReaper | Mode: LIVE ---
+- [Validate] SUCCESS: Required fields 'user' and 'source' are present.
+- [Execute]  EXCEPTION: Network error - Timeout while calling Slack API for user timeout@example.com
+- [Report]   LIVE: FAILED - Remediation failed for user 'timeout@example.com'
+
+### API Responses
+```json
+{
+  "success": false,
+  "message": "Timeout while calling Slack API for user timeout@example.com",
+  "timestamp": "2025-06-25T14:42:56.517507",
+  "error_type": "TimeoutError"
+}
+```
+
+---
+
+## Action Report - 2025-06-25 14:42:56 UTC
+
+**Mode:** LIVE
+
+**Event ID:** test-permission-001
+
+**Event Type:** open_s3_bucket
+
+**Status:** processed
+
+### Event Details
+```json
+{
+  "type": "open_s3_bucket",
+  "event_id": "test-permission-001",
+  "bucket_name": "permission-bucket",
+  "region": "us-east-1",
+  "timestamp": "2024-01-01T12:00:00Z",
+  "severity": "critical"
+}
+```
+
+### Processing Log
+- --- Event ID: test-permission-001 | Module: S3VisibilityReaper | Mode: LIVE ---
+- [Validate] SUCCESS: Required fields 'bucket_name' and 'region' are present.
+- [Execute]  EXCEPTION: Permission/Validation error - Access denied: insufficient permissions for bucket permission-bucket
+- [Report]   LIVE: Public access block applied to 'permission-bucket'
+
+### API Responses
+```json
+{
+  "success": false,
+  "message": "Access denied: insufficient permissions for bucket permission-bucket",
+  "timestamp": "2025-06-25T14:42:56.524991",
+  "error_type": "PermissionError"
+}
+```
+
+---
+

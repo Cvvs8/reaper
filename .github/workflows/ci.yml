@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9, 3.10, 3.11]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v4
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -61,6 +61,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
     - name: Run security scan with bandit
       run: |
         pip install bandit
@@ -69,7 +74,7 @@ jobs:
       continue-on-error: true
     
     - name: Upload security scan results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-scan-results
         path: bandit-report.json
@@ -87,21 +92,21 @@ jobs:
     
     - name: Build Docker image
       run: |
-        docker build -t reaper-agent:${{ github.sha }} .
+        docker build -t reaper-agent:test .
     
     - name: Test Docker container
       run: |
         # Start container in background
-        docker run -d --name reaper-test -p 5001:5001 reaper-agent:${{ github.sha }}
+        docker run -d --name reaper-test -p 5001:5001 reaper-agent:test
         
         # Wait for container to start
-        sleep 10
+        sleep 15
         
         # Test health endpoint
         curl -f http://localhost:5001/ || exit 1
         
         # Run tests inside container
-        docker exec reaper-test python run_tests.py
+        docker exec reaper-test python -m pytest tests/ -v || exit 1
         
         # Stop container
         docker stop reaper-test
@@ -109,14 +114,14 @@ jobs:
     - name: Run integration tests in Docker
       run: |
         # Start container
-        docker run -d --name reaper-integration -p 5001:5001 reaper-agent:${{ github.sha }}
-        sleep 10
+        docker run -d --name reaper-integration -p 5001:5001 reaper-agent:test
+        sleep 15
         
         # Install requests for integration tests
         pip install requests
         
         # Run integration tests
-        python test_reaper.py
+        python test_reaper.py || exit 1
         
         # Cleanup
         docker stop reaper-integration
@@ -127,9 +132,9 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.11
+        python-version: "3.11"
     
     - name: Install dependencies
       run: |
@@ -142,7 +147,7 @@ jobs:
         python -m pytest tests/ --cov=app --cov-report=xml --cov-report=html
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -150,7 +155,7 @@ jobs:
       continue-on-error: true
     
     - name: Upload coverage report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: htmlcov/
